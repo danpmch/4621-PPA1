@@ -8,12 +8,6 @@ import cs4621.ppa1.util.Util;
 
 public class RotateManip extends Manip
 {
-	static boolean dragLock = false;
-	
-	boolean firstDrag = true;
-	Vector3f mousePointOffset = new Vector3f();
-	
-	Vector3f lastPlaneNormal = new Vector3f();
 	
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)

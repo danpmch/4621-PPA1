@@ -11,13 +11,6 @@ import cs4621.ppa1.util.Util;
 public class TranslateManip extends Manip
 {
 	
-	static boolean dragLock = false;
-	
-	boolean firstDrag = true;
-	Vector3f mousePointOffset = new Vector3f();
-	
-	Vector3f lastPlaneNormal = new Vector3f();
-	
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)
 	{
@@ -116,6 +109,12 @@ public class TranslateManip extends Manip
 				+mousePoint.x+","
 				+mousePoint.y+","
 				+mousePoint.z+")");
+
+		System.out.println(">>> Mouse point offset:("
+				+mousePointOffset.x+","
+				+mousePointOffset.y+","
+				+mousePointOffset.z+")");
+		
 		
 		//now that mousepoint is known, can do special case
 		if(axisMode==PICK_CENTER) {
