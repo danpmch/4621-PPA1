@@ -13,170 +13,90 @@ public class TranslateManip extends Manip
 	boolean firstDrag = true;
 	Vector3f mousePointOffset = new Vector3f();
 	
+	// Assumes that axis_local is normalized
+	public Vector3f dragged_axis_manip( Vector2f mousePosition, Vector2f mousePosition_old, Vector3f axis_local )
+	{
+		Vector3f axis_world = new Vector3f();
+		transformationNode.toWorld( axis_local, axis_world );
+		
+		Vector3f origin_world = new Vector3f();
+		transformationNode.toWorld( new Vector3f( 0f, 0f, 0f ), origin_world );
+		
+		//get current line through mouse
+		Vector3f mouseCurrent_origin = new Vector3f();
+		Vector3f mouseCurrent_axis = new Vector3f();
+		
+		// find closest point on axis to mouse line
+		camera.getLineThroughNDC( mousePosition, mouseCurrent_origin, mouseCurrent_axis );
+		double t1 = Util.lineNearLine( origin_world, axis_world, mouseCurrent_origin, mouseCurrent_axis );
+		
+		//get old line through mouse
+		Vector3f mouseOld_origin = new Vector3f();
+		Vector3f mouseOld_axis = new Vector3f();
+		
+		// find closest point on axis to mouse line
+		camera.getLineThroughNDC( mousePosition_old, mouseOld_origin, mouseOld_axis );
+		double t0 = Util.lineNearLine( origin_world, axis_world, mouseOld_origin, mouseOld_axis );
+		
+		// compute change in translation in local space
+		double dt = t1 - t0;
+		Vector3f translation_change = new Vector3f( axis_local );
+		translation_change.scale( ( float ) dt );
+		
+		return translation_change;
+	}
+	
+	public Vector3f dragged_orig_manip( Vector2f mousePosition, Vector2f mousePosition_old )
+	{
+		//convert object origin to world space.
+		Vector3f origin_world = new Vector3f();
+		transformationNode.toWorld( e0, origin_world );
+		
+		// compute current and old mouse positions on plane containing origin
+		Vector3f mouseCurrent_pos = camera.NDCToWorldAt(mousePosition, origin_world);
+		Vector3f mouseOld_pos = camera.NDCToWorldAt(mousePosition_old, origin_world);
+		
+		// compute world space change in translation
+		Vector3f trans = new Vector3f( mouseCurrent_pos );
+		trans.sub( mouseOld_pos );
+		
+		// convert to local space
+		Vector3f trans_local = new Vector3f();
+		transformationNode.toLocal(trans, trans_local);
+		
+		return trans_local;
+	}
+	
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)
 	{
 		System.out.println("Dragging translation:");
+		System.out.println( "Mouse delta: " + mouseDelta );
+		Vector2f mousePosition_old = new Vector2f( mousePosition );
+		mousePosition_old.sub( mouseDelta );
+		System.out.printf( "Mouse Position Current: %s\n", mousePosition );
+		System.out.printf( "Mouse Position Old: %s\n", mousePosition_old );
 		
-		Vector3f camDir = new Vector3f(camera.target.x-camera.eye.x,
-				   camera.target.y-camera.eye.y, 
-				   camera.target.z-camera.eye.z);
-		camDir.normalize();
-		
-		//get mouse ray
-		Vector3f mr1 = new Vector3f();
-		Vector3f mr2 = new Vector3f();
-		camera.getLineThroughNDC(mousePosition, mr1, mr2);
-		Vector3f mouseRay = new Vector3f(mr2.x-mr1.x,mr2.y-mr1.y,mr2.z-mr1.z);
-		
-		Vector3f planeNormal = new Vector3f();
-		Vector3f axis = new Vector3f();
-		
+		Vector3f change_in_translation = null;
 		switch(axisMode) {
 		case PICK_X:
-			if(transformationNode.getLowestTransformationNodeAncestor()==null) {
-				axis = new Vector3f(1f,0f,0f);	
-			} else {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(new Vector3f(1f,0f,0f), axis);
-			}
+			change_in_translation = dragged_axis_manip( mousePosition, mousePosition_old, eX );
 			break;
-			
 		case PICK_Y:
-			if(transformationNode.getLowestTransformationNodeAncestor()==null) {
-				axis = new Vector3f(0f,1f,0f);	
-			} else {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(new Vector3f(0f,1f,0f), axis);
-			}
+			change_in_translation = dragged_axis_manip( mousePosition, mousePosition_old, eY );
 			break;
 		
 		case PICK_Z:
-			if(transformationNode.getLowestTransformationNodeAncestor()==null) {
-				axis = new Vector3f(0f,0f,1f);	
-			} else {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(new Vector3f(0f,0f,1f), axis);
-			}
+			change_in_translation = dragged_axis_manip( mousePosition, mousePosition_old, eZ );
 			break;
 			
 		case PICK_CENTER:
-			planeNormal.add(camDir);
-			//special case axis: points to mousepoint.
-			//so, do nothing.
+			change_in_translation = dragged_orig_manip( mousePosition, mousePosition_old );
 			break;
 		}
 		
-		//do plane normal
-
-		//do not need axis for pickcenter, because
-		//plane normal will subtract the projection,
-		//which will be 0, and norm will point at cam
-		if(!(axis.x==0&&axis.y==0&&axis.z==0))
-			axis.normalize();
-		
-		float mag = axis.dot(camDir);
-		if(Float.isNaN(mag)) mag = 0;
-		
-		
-		Vector3f planeProj = new Vector3f(
-			axis.x*mag,
-			axis.y*mag,
-			axis.z*mag
-		);
-		
-		//perpendicularize plane normal to axis
-		planeNormal.set(camDir);
-		planeNormal.sub(planeProj);
-		
-		planeNormal.normalize();
-		Vector3f orig = new Vector3f();
-		
-		System.out.println(">>> Plane normal:("
-				+planeNormal.x+","
-				+planeNormal.y+","
-				+planeNormal.z+")");
-		
-		//convert object origin to world space.
-		if(transformationNode.getLowestTransformationNodeAncestor()!=null) {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(transformationNode.translation, orig);
-		}
-		
-		//raycast camera onto origin/normal plane to get mouse point
-		Vector3f mousePoint = PlaneRaycast(orig,planeNormal,
-				new Vector3f(camera.eye),mouseRay);
-		
-		if(firstDrag) {
-			firstDrag = false;
-			mousePointOffset.set(mousePoint);
-		}
-		
-		System.out.println(">>> Mouse point:("
-				+mousePoint.x+","
-				+mousePoint.y+","
-				+mousePoint.z+")");
-		
-		//now that mousepoint is known, can do special case
-		if(axisMode==PICK_CENTER) {
-			axis = new Vector3f(mousePoint.x-orig.x,
-							    mousePoint.y-orig.y,
-							    mousePoint.z-orig.z);
-		}
-		
-		System.out.println(">>> Axis Vector: ("+axis.x+","+axis.y+","+axis.z+")");
-		
-		Vector3f trans = new Vector3f();
-		
-		//compose translation vector
-		switch(axisMode) {
-		case PICK_X:
-			trans = new Vector3f(mousePoint.x-mousePointOffset.x,
-					transformationNode.translation.y,
-					transformationNode.translation.z);
-			break;
-			
-		case PICK_Y:
-			trans = new Vector3f(
-					transformationNode.translation.x,
-					mousePoint.y-mousePointOffset.y,
-					transformationNode.translation.z);
-			break;
-		
-		case PICK_Z:
-			trans = new Vector3f(
-					transformationNode.translation.x,
-					transformationNode.translation.y,
-					mousePoint.z-mousePointOffset.z);
-			break;
-			
-		case PICK_CENTER:
-			trans = new Vector3f(mousePoint);
-			trans.sub(mousePointOffset);
-			break;
-		}
-		
-		System.out.println(">>> Raw Translation :("+trans.x+","+trans.y+","+trans.z+")");
-		
-		//transform the translation to localspace
-		
-		Vector3f lossyScale = transformationNode.
-			getLowestTransformationNodeAncestor().lossyScale();
-		
-		Vector3f rtrans = new Vector3f(trans);
-		//	trans.x/lossyScale.x,
-		//	trans.y/lossyScale.y,
-		//	trans.z/lossyScale.z
-		//);
-		
-		if(transformationNode.getLowestTransformationNodeAncestor()!=null)
-			transformationNode.getLowestTransformationNodeAncestor().toLocal(trans,rtrans);
-		//transformationNode.toLocal(trans,rtrans);
-			
-		System.out.println(">>> Translation :("+rtrans.x+","+rtrans.y+","+rtrans.z+")");
-		
-		transformationNode.translation.set(rtrans);
-		
+		// update translation
+		transformationNode.translation.add( change_in_translation );
 	}
 
 	public void released() {
