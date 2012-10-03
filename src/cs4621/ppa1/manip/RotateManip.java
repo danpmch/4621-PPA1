@@ -8,10 +8,30 @@ import cs4621.ppa1.util.Util;
 
 public class RotateManip extends Manip
 {
+	// determined by trial and error, adjust to preference
+	final float DEGREES_PER_STEP = 90.0f;
+	
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)
 	{
-		// TODO: (Problem 1) Implement this manipulator.
+		float dy = mouseDelta.y;
+		float dr = DEGREES_PER_STEP * dy;
+		
+		switch( axisMode )
+		{
+		case PICK_X:
+			transformationNode.rotation.x += dr;
+			break;
+		case PICK_Y:
+			transformationNode.rotation.y += dr;
+			break;
+		case PICK_Z:
+			transformationNode.rotation.z += dr;
+			break;
+		default:
+			System.out.println( "ERROR: Invalid manipulator" );
+			break;
+		}
 	}
 
 	private Vector3f xAxis = new Vector3f();
