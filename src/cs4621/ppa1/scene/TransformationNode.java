@@ -191,17 +191,14 @@ public class TransformationNode extends SceneNode
 	public void toLocal(Vector3f v, Vector3f outv)
 	{
 		Vector3f result = new Vector3f();
+		if (getLowestTransformationNodeAncestor() != null)
+		{
+			getLowestTransformationNodeAncestor().toLocal(v, result);
+		}
 		inverseTransform(v, result);
-		if (getLowestTransformationNodeAncestor() == null)
-		{
-			outv.set(result);
-		}
-		else
-		{
-			getLowestTransformationNodeAncestor().toWorld(result, outv);
-		}
+		outv.set( result );
 	}
-
+	
 	public Vector3f lossyScale() {
 		Vector3f v = new Vector3f(1,1,1);
 		return lsh(v);
