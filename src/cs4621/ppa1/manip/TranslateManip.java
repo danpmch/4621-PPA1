@@ -64,6 +64,11 @@ public class TranslateManip extends Manip
 		Vector3f trans_local = new Vector3f();
 		transformationNode.toLocal(trans, trans_local);
 		
+		System.out.println( "Origin World: " + origin_world );
+		System.out.println( "Mouse current: " + mouseCurrent_pos );
+		System.out.println( "Mouse old: " + mouseOld_pos );
+		System.out.println( "Trans: " + trans );
+		System.out.println( "Trans local: " + trans_local );
 		return trans_local;
 	}
 	
