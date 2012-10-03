@@ -2,6 +2,7 @@ package cs4621.ppa1.manip;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
+import javax.vecmath.Matrix3f;
 import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3f;
 
@@ -13,7 +14,38 @@ public class ScaleManip extends Manip {
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)
 	{
-		// TODO: (Problem 1) Implement this manipulator.
+		Vector2f mousePosition_old = new Vector2f( mousePosition );
+		mousePosition_old.sub( mouseDelta );
+		
+		Vector3f change_in_scale = null;
+		switch(axisMode) {
+		case PICK_X:
+			change_in_scale = dragged_axis_manip( mousePosition, mousePosition_old, eX );
+			break;
+		case PICK_Y:
+			change_in_scale = dragged_axis_manip( mousePosition, mousePosition_old, eY );
+			break;
+		
+		case PICK_Z:
+			change_in_scale = dragged_axis_manip( mousePosition, mousePosition_old, eZ );
+			break;
+			
+		case PICK_CENTER:
+//			change_in_scale = dragged_orig_manip( mousePosition, mousePosition_old );
+			break;
+		}
+		
+		change_in_scale.sub( transformationNode.translation );
+		
+		Matrix3f tempMatrix = new Matrix3f();
+		tempMatrix.rotZ((float)Math.toRadians(-transformationNode.rotation.z));
+		tempMatrix.transform(change_in_scale);
+		tempMatrix.rotY((float)Math.toRadians(-transformationNode.rotation.y));
+		tempMatrix.transform(change_in_scale);
+		tempMatrix.rotX((float)Math.toRadians(-transformationNode.rotation.x));
+		tempMatrix.transform(change_in_scale);
+		transformationNode.scaling.add( change_in_scale );
+		
 	}
 
 	Vector3f xManipBasis = new Vector3f();
