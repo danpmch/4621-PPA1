@@ -5,59 +5,67 @@ import javax.media.opengl.GL2;
 import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3f;
 
+import cs4621.ppa1.scene.TransformationNode;
 import cs4621.ppa1.util.Util;
 
 public class TranslateManip extends Manip
 {
 	
+	static boolean dragLock = false;
+	
 	boolean firstDrag = true;
 	Vector3f mousePointOffset = new Vector3f();
+	
+	Vector3f lastPlaneNormal = new Vector3f();
 	
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)
 	{
-		System.out.println("Dragging translation:");
+		//return if another manip is active and has lock
+		if(firstDrag) {
+			if(dragLock) { 
+				return;
+			} else {
+				dragLock = true; //acquire lock
+			}
+		}
 		
-		Vector3f camDir = new Vector3f(camera.target.x-camera.eye.x,
+		//init cam dir to local space
+		Vector3f camDir = new Vector3f();
+		Vector3f camDirGlobal = new Vector3f(camera.target.x-camera.eye.x,
 				   camera.target.y-camera.eye.y, 
 				   camera.target.z-camera.eye.z);
+		toParentLocalDirection(camDirGlobal,camDir, transformationNode);
 		camDir.normalize();
 		
-		//get mouse ray
+		//init mouse ray to local space
 		Vector3f mr1 = new Vector3f();
 		Vector3f mr2 = new Vector3f();
 		camera.getLineThroughNDC(mousePosition, mr1, mr2);
-		Vector3f mouseRay = new Vector3f(mr2.x-mr1.x,mr2.y-mr1.y,mr2.z-mr1.z);
+		Vector3f mouseRayGlobal = new Vector3f(mr2.x-mr1.x,mr2.y-mr1.y,mr2.z-mr1.z);
+		Vector3f mouseRay = new Vector3f();
+		toParentLocalDirection(mouseRayGlobal, mouseRay, transformationNode);
+		mouseRay.normalize();
+		
+		//init cam eye to local space
+		Vector3f camEye = new Vector3f();
+		toParentLocalDirection(new Vector3f(camera.eye),
+				camEye, transformationNode);
 		
 		Vector3f planeNormal = new Vector3f();
 		Vector3f axis = new Vector3f();
 		
 		switch(axisMode) {
 		case PICK_X:
-			if(transformationNode.getLowestTransformationNodeAncestor()==null) {
-				axis = new Vector3f(1f,0f,0f);	
-			} else {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(new Vector3f(1f,0f,0f), axis);
-			}
+			axis = new Vector3f(1f,0f,0f);	
 			break;
 			
 		case PICK_Y:
-			if(transformationNode.getLowestTransformationNodeAncestor()==null) {
-				axis = new Vector3f(0f,1f,0f);	
-			} else {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(new Vector3f(0f,1f,0f), axis);
-			}
+			axis = new Vector3f(0f,1f,0f);	
 			break;
 		
 		case PICK_Z:
-			if(transformationNode.getLowestTransformationNodeAncestor()==null) {
-				axis = new Vector3f(0f,0f,1f);	
-			} else {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(new Vector3f(0f,0f,1f), axis);
-			}
+			axis = new Vector3f(0f,0f,1f);	
 			break;
 			
 		case PICK_CENTER:
@@ -72,8 +80,6 @@ public class TranslateManip extends Manip
 		//do not need axis for pickcenter, because
 		//plane normal will subtract the projection,
 		//which will be 0, and norm will point at cam
-		if(!(axis.x==0&&axis.y==0&&axis.z==0))
-			axis.normalize();
 		
 		float mag = axis.dot(camDir);
 		if(Float.isNaN(mag)) mag = 0;
@@ -90,22 +96,16 @@ public class TranslateManip extends Manip
 		planeNormal.sub(planeProj);
 		
 		planeNormal.normalize();
-		Vector3f orig = new Vector3f();
+		Vector3f orig = new Vector3f(transformationNode.translation);
 		
 		System.out.println(">>> Plane normal:("
 				+planeNormal.x+","
 				+planeNormal.y+","
 				+planeNormal.z+")");
 		
-		//convert object origin to world space.
-		if(transformationNode.getLowestTransformationNodeAncestor()!=null) {
-			transformationNode.getLowestTransformationNodeAncestor().
-				toWorld(transformationNode.translation, orig);
-		}
-		
 		//raycast camera onto origin/normal plane to get mouse point
 		Vector3f mousePoint = PlaneRaycast(orig,planeNormal,
-				new Vector3f(camera.eye),mouseRay);
+				camEye,mouseRay);
 		
 		if(firstDrag) {
 			firstDrag = false;
@@ -123,7 +123,7 @@ public class TranslateManip extends Manip
 							    mousePoint.y-orig.y,
 							    mousePoint.z-orig.z);
 		}
-		
+			
 		System.out.println(">>> Axis Vector: ("+axis.x+","+axis.y+","+axis.z+")");
 		
 		Vector3f trans = new Vector3f();
@@ -156,36 +156,18 @@ public class TranslateManip extends Manip
 			break;
 		}
 		
-		System.out.println(">>> Raw Translation :("+trans.x+","+trans.y+","+trans.z+")");
+		System.out.println(">>> Translation :("+trans.x+","+trans.y+","+trans.z+")");
 		
-		//transform the translation to localspace
-		
-		Vector3f lossyScale = transformationNode.
-			getLowestTransformationNodeAncestor().lossyScale();
-		
-		Vector3f rtrans = new Vector3f(trans);
-		//	trans.x/lossyScale.x,
-		//	trans.y/lossyScale.y,
-		//	trans.z/lossyScale.z
-		//);
-		
-		if(transformationNode.getLowestTransformationNodeAncestor()!=null)
-			transformationNode.getLowestTransformationNodeAncestor().toLocal(trans,rtrans);
-		//transformationNode.toLocal(trans,rtrans);
-			
-		System.out.println(">>> Translation :("+rtrans.x+","+rtrans.y+","+rtrans.z+")");
-		
-		transformationNode.translation.set(rtrans);
+		Vector3f dbgPlaneNorm = new Vector3f(transformationNode.translation);
+		dbgPlaneNorm.add(planeNormal);
+	
+		transformationNode.translation.set(trans);
 		
 	}
 
 	public void released() {
 		super.released();
 		resetState();
-	}
-	
-	void resetState() {
-		firstDrag = true;
 	}
 	
 	private Vector3f xAxis = new Vector3f();

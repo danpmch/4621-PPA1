@@ -32,6 +32,13 @@ public abstract class Manip
 	Vector3f eY = new Vector3f(0,1,0);
 	Vector3f eZ = new Vector3f(0,0,1);
 
+
+	protected static boolean dragLock = false;
+	
+	protected boolean firstDrag = true;
+	
+	Vector3f mousePointOffset = new Vector3f();
+	
 	protected EventListenerList changeListenerList = new EventListenerList();
 
 	/**
@@ -64,6 +71,29 @@ public abstract class Manip
 	 */
 	public abstract void dragged(Vector2f mousePosition, Vector2f mouseDelta);
 
+	void resetState() {
+		firstDrag = true;
+		dragLock = false; //release lock
+	}
+	
+	static void toParentLocal(Vector3f v, Vector3f vout, TransformationNode t) {
+		if(t.getLowestTransformationNodeAncestor()!=null) {
+			t.
+			getLowestTransformationNodeAncestor().toLocal(v,vout);
+		} else {
+			vout.set(v);
+		}
+	}
+	
+	static void toParentLocalDirection(Vector3f v, Vector3f vout, TransformationNode t) {
+		if(t.getLowestTransformationNodeAncestor()!=null) {
+			t.
+			getLowestTransformationNodeAncestor().toLocalDirection(v,vout);
+		} else {
+			vout.set(v);
+		}
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Various methods for controlling manipulators
 	////////////////////////////////////////////////////////////////////////////////////////////////////

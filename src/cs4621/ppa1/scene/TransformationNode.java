@@ -199,6 +199,21 @@ public class TransformationNode extends SceneNode
 		outv.set( result );
 	}
 	
+	/**
+	 * Converts the given direction v from world space to local space
+	 * Difference from ToLocal is that ToLocalDir ignores translates.
+	 */
+	public void toLocalDirection(Vector3f v, Vector3f outv)
+	{
+		Vector3f result = new Vector3f();
+		if (getLowestTransformationNodeAncestor() != null)
+		{
+			getLowestTransformationNodeAncestor().toLocalDirection(v, result);
+		}
+		inverseTransformDirection(v, result);
+		outv.set( result );
+	}
+	
 	public Vector3f lossyScale() {
 		Vector3f v = new Vector3f(1,1,1);
 		return lsh(v);
@@ -224,6 +239,26 @@ public class TransformationNode extends SceneNode
 
 		// Translate
 		outv.sub(translation);
+		
+		// Rotate
+		tempMatrix.rotZ((float)Math.toRadians(-rotation.z));
+		tempMatrix.transform(outv);
+		tempMatrix.rotY((float)Math.toRadians(-rotation.y));
+		tempMatrix.transform(outv);
+		tempMatrix.rotX((float)Math.toRadians(-rotation.x));
+		tempMatrix.transform(outv);
+
+		// Scale
+		outv.set(outv.x / scaling.x, outv.y / scaling.y, outv.z / scaling.z);
+
+	}
+
+	/**
+	 * Transforms the given point by this transformation
+	 */
+	public void inverseTransformDirection(Vector3f v, Vector3f outv)
+	{
+		outv.set(v);
 		
 		// Rotate
 		tempMatrix.rotZ((float)Math.toRadians(-rotation.z));
