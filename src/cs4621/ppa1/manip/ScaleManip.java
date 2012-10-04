@@ -64,8 +64,8 @@ public class ScaleManip extends Manip {
 		if( trans.x == 0 || Float.isNaN( trans.x ) ) return;
 		
 		float a1 = transformationNode.scaling.x + trans.x;
-		float b1 = transformationNode.scaling.y + transformationNode.scaling.y / trans.x;
-		float c1 = transformationNode.scaling.z + transformationNode.scaling.z / trans.x;
+		float b1 = transformationNode.scaling.y + transformationNode.scaling.y / transformationNode.scaling.x * trans.x;
+		float c1 = transformationNode.scaling.z + transformationNode.scaling.z / transformationNode.scaling.x * trans.x;
 		
 		transformationNode.scaling.set( a1, b1, c1 );
 	}
