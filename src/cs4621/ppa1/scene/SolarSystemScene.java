@@ -6,6 +6,7 @@ import cs4621.ppa1.scene.*;
 import java.util.HashMap;
 
 import javax.vecmath.Matrix3f;
+import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
 public class SolarSystemScene extends Scene {
@@ -30,9 +31,10 @@ public class SolarSystemScene extends Scene {
 	public SolarSystemScene() {
 		planet_data = new HashMap< String, PlanetData >();
 		planet_data.put( "Sun", new PlanetData( 0f, 0f ) );
-		planet_data.put( "Earth", new PlanetData( 0.1f, 2.0f ) );
-		planet_data.put( "Moon", new PlanetData( 0.1f, 5.0f ) );
-		planet_data.put( "Mars", new PlanetData( 0.05f, 5.0f ) );
+		planet_data.put( "EarthGroup", new PlanetData( 0.05f, 0f ) );
+		planet_data.put( "Earth", new PlanetData( 0f, 2.0f ) );
+		planet_data.put( "Moon", new PlanetData( 0.2f, 5.0f ) );
+		planet_data.put( "Mars", new PlanetData( 0.025f, 15.0f ) );
 		tmp_rotation = new Matrix3f();
 		time_prev = 0;
 	}
@@ -45,6 +47,37 @@ public class SolarSystemScene extends Scene {
 			e.printStackTrace();
 			System.exit(1);
 			return null;
+		}
+	}
+	
+	// cancel out parent revolution, since that shouldn't affect position of satellites
+    // sets v = (S^-1)(R^-1)Sv, converting to parent frame then gives TRS(S^-1)(R^-1)Sv = TSv
+	protected void cancelParentRotation( TransformationNode node, float time, Vector3f v )
+	{
+		TransformationNode parent = node.getLowestTransformationNodeAncestor();
+		if( parent != null )
+		{
+			Matrix4f m = new Matrix4f();
+//			m.setScale(arg0)
+			
+			// transform to parent space
+			v.x *= parent.scaling.x;
+			v.y *= parent.scaling.y;
+			v.z *= parent.scaling.z;
+			
+			// undo parent revolution
+			float parent_rev = parent.rotation.y;
+			tmp_rotation.rotZ( -parent.rotation.z );
+		    tmp_rotation.transform( v );
+			tmp_rotation.rotY( -time * parent_rev );
+		    tmp_rotation.transform( v );
+			tmp_rotation.rotX( -parent.rotation.x );
+		    tmp_rotation.transform( v );
+		    
+		    // transform back to object frame
+			v.x /= parent.scaling.x;
+			v.y /= parent.scaling.y;
+			v.z /= parent.scaling.z;
 		}
 	}
 
@@ -64,38 +97,12 @@ public class SolarSystemScene extends Scene {
 		
 		// rotation
 		float rotation_angle = time * data.rotation_degrees_per_step;
-		
-		// cancel out parent revolution, since that shouldn't affect position of satellites
-		TransformationNode parent = node.getLowestTransformationNodeAncestor();
-		float parent_rev = 0f;
-		if( parent != null )
-			parent_rev = parent.rotation.y;
-			
 		Vector3f translation = node.translation;
-		Vector3f previous_translation = new Vector3f( node.translation );
-		
 		translation.set( data.initial_translation );
-		tmp_rotation.rotY( rotation_angle - parent_rev );
+		tmp_rotation.rotY( rotation_angle );
 	    tmp_rotation.transform( translation );
 		
-	    if( name.equals("Moon"))
-	    {
-	    	// a bunch of debug calculations
-	    	Vector3f world_translation = new Vector3f( node.translation );
-	    	float cos_angle = world_translation.dot(previous_world_translation) / ( world_translation.length() * previous_world_translation.length() );
-	    	float angle = ( float )( Math.acos( cos_angle ) * 180.0 / Math.PI );
-	    	tmp_rotation.rotY( parent_rev );
-	    	tmp_rotation.transform( world_translation );
-	    	previous_world_translation.set( world_translation );
-	    	
-	    	System.out.printf( "Rotation: %f, Parent Revolution: %f, Net Rotation: %f\n", rotation_angle, 
-	    			parent_rev, rotation_angle - parent_rev );
-	    	System.out.printf( "Original translation: %s, New Translation: %s, Fully Rotated Translation: %s\n", 
-	    			previous_translation, node.translation, world_translation );
-	    	System.out.println( "World space update angle: " + angle );
-	    }
-	    
-	    time_prev = time;
+//		cancelParentRotation( node, time, translation );
 	}
-
+		
 }
