@@ -11,6 +11,65 @@ import cs4621.ppa1.util.Util;
 
 public class ScaleManip extends Manip {
 	
+	// converts a world space vector into a vector with only the local scale applied to it
+	protected Vector3f toScaleSpace( Vector3f v )
+	{
+		Vector3f new_v = new Vector3f();
+		transformationNode.toLocal(v, new_v);
+		new_v.x = new_v.x * transformationNode.scaling.x;
+		new_v.y = new_v.y * transformationNode.scaling.y;
+		new_v.z = new_v.z * transformationNode.scaling.z;
+		
+		return new_v;
+	}
+	
+	// Assumes that axis_local is normalized
+	public Vector3f dragged_axis_manip( Vector2f mousePosition, Vector2f mousePosition_old, Vector3f axis_local )
+	{
+		//get current line through mouse
+		Vector3f mouseCurrent_origin_w = new Vector3f();
+		Vector3f mouseCurrent_axis_w = new Vector3f();
+		
+		// find closest point on axis to mouse line
+		camera.getLineThroughNDC( mousePosition, mouseCurrent_origin_w, mouseCurrent_axis_w );
+		
+		double t1 = Util.lineNearLine( e0, 
+				toScaleSpace( axis_local ), 
+				toScaleSpace( mouseCurrent_origin_w ), 
+				toScaleSpace( mouseCurrent_axis_w ) );
+		
+		//get old line through mouse
+		Vector3f mouseOld_origin_w = new Vector3f();
+		Vector3f mouseOld_axis_w = new Vector3f();
+		
+		// find closest point on axis to mouse line
+		camera.getLineThroughNDC( mousePosition_old, mouseOld_origin_w, mouseOld_axis_w );
+		
+		double t0 = Util.lineNearLine( e0, 
+				toScaleSpace( axis_local ), 
+				toScaleSpace( mouseOld_origin_w ), 
+				toScaleSpace( mouseOld_axis_w ) );
+		
+		// compute change in translation in local space
+		double dt = t1 - t0;
+		Vector3f translation_change = new Vector3f( axis_local );
+		translation_change.scale( ( float ) dt );
+		
+		return translation_change;
+	}
+	
+	protected void dragged_orig_manip( Vector2f mousePosition, Vector2f mousePosition_old )
+	{
+		Vector3f trans = get_translation_w(mousePosition, mousePosition_old);
+		if( trans.x == 0 || Float.isNaN( trans.x ) ) return;
+		
+		float a1 = transformationNode.scaling.x + trans.x;
+		float b1 = transformationNode.scaling.y + transformationNode.scaling.y / trans.x;
+		float c1 = transformationNode.scaling.z + transformationNode.scaling.z / trans.x;
+		
+		transformationNode.scaling.set( a1, b1, c1 );
+	}
+	
 	@Override
 	public void dragged(Vector2f mousePosition, Vector2f mouseDelta)
 	{
@@ -31,19 +90,13 @@ public class ScaleManip extends Manip {
 			break;
 			
 		case PICK_CENTER:
-//			change_in_scale = dragged_orig_manip( mousePosition, mousePosition_old );
-			break;
+			mouseDelta.y = 0;
+			mousePosition_old.set( mousePosition );
+			mousePosition_old.sub( mouseDelta );
+			dragged_orig_manip( mousePosition, mousePosition_old );
+			return;
 		}
 		
-		change_in_scale.sub( transformationNode.translation );
-		
-		Matrix3f tempMatrix = new Matrix3f();
-		tempMatrix.rotZ((float)Math.toRadians(-transformationNode.rotation.z));
-		tempMatrix.transform(change_in_scale);
-		tempMatrix.rotY((float)Math.toRadians(-transformationNode.rotation.y));
-		tempMatrix.transform(change_in_scale);
-		tempMatrix.rotX((float)Math.toRadians(-transformationNode.rotation.x));
-		tempMatrix.transform(change_in_scale);
 		transformationNode.scaling.add( change_in_scale );
 		
 	}

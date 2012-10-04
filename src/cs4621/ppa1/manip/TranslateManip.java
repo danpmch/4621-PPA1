@@ -13,28 +13,47 @@ public class TranslateManip extends Manip
 	boolean firstDrag = true;
 	Vector3f mousePointOffset = new Vector3f();
 	
+	// Assumes that axis_local is normalized
+	public Vector3f dragged_axis_manip( Vector2f mousePosition, Vector2f mousePosition_old, Vector3f axis_local )
+	{
+		Vector3f axis_world = new Vector3f();
+		transformationNode.toWorld( axis_local, axis_world );
+		
+		Vector3f origin_world = new Vector3f();
+		transformationNode.toWorld( new Vector3f( 0f, 0f, 0f ), origin_world );
+		
+		//get current line through mouse
+		Vector3f mouseCurrent_origin = new Vector3f();
+		Vector3f mouseCurrent_axis = new Vector3f();
+		
+		// find closest point on axis to mouse line
+		camera.getLineThroughNDC( mousePosition, mouseCurrent_origin, mouseCurrent_axis );
+		double t1 = Util.lineNearLine( origin_world, axis_world, mouseCurrent_origin, mouseCurrent_axis );
+		
+		//get old line through mouse
+		Vector3f mouseOld_origin = new Vector3f();
+		Vector3f mouseOld_axis = new Vector3f();
+		
+		// find closest point on axis to mouse line
+		camera.getLineThroughNDC( mousePosition_old, mouseOld_origin, mouseOld_axis );
+		double t0 = Util.lineNearLine( origin_world, axis_world, mouseOld_origin, mouseOld_axis );
+		
+		// compute change in translation in local space
+		double dt = t1 - t0;
+		Vector3f translation_change = new Vector3f( axis_local );
+		translation_change.scale( ( float ) dt );
+		
+		return translation_change;
+	}
+	
 	public Vector3f dragged_orig_manip( Vector2f mousePosition, Vector2f mousePosition_old )
 	{
-		//convert object origin to world space.
-		Vector3f origin_world = new Vector3f();
-		transformationNode.toWorld( e0, origin_world );
-		
-		// compute current and old mouse positions on plane containing origin
-		Vector3f mouseCurrent_pos = camera.NDCToWorldAt(mousePosition, origin_world);
-		Vector3f mouseOld_pos = camera.NDCToWorldAt(mousePosition_old, origin_world);
-		
-		// compute world space change in translation
-		Vector3f trans = new Vector3f( mouseCurrent_pos );
-		trans.sub( mouseOld_pos );
+		Vector3f trans = get_translation_w( mousePosition, mousePosition_old );
 		
 		// convert to local space
 		Vector3f trans_local = new Vector3f();
 		transformationNode.toLocal(trans, trans_local);
 		
-		System.out.println( "Origin World: " + origin_world );
-		System.out.println( "Mouse current: " + mouseCurrent_pos );
-		System.out.println( "Mouse old: " + mouseOld_pos );
-		System.out.println( "Trans: " + trans );
 		System.out.println( "Trans local: " + trans_local );
 		return trans_local;
 	}
