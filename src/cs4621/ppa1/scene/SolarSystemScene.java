@@ -48,7 +48,7 @@ public class SolarSystemScene extends Scene {
 		}
 	}
 
-	
+   	Vector3f previous_world_translation = new Vector3f();
 	public void updateTransformationNode(TransformationNode node, float time) {
 		String name = node.name;
 		PlanetData data = planet_data.get( name );
@@ -63,21 +63,37 @@ public class SolarSystemScene extends Scene {
 		node.rotation.y = time * data.revolution_degrees_per_step;
 		
 		// rotation
-		TransformationNode parent = node.getLowestTransformationNodeAncestor();
+		float rotation_angle = time * data.rotation_degrees_per_step;
 		
 		// cancel out parent revolution, since that shouldn't affect position of satellites
+		TransformationNode parent = node.getLowestTransformationNodeAncestor();
 		float parent_rev = 0f;
 		if( parent != null )
-		{
 			parent_rev = parent.rotation.y;
-		}
 			
-		float rotation_angle = time * data.rotation_degrees_per_step;
-		System.out.println( name + " Rotation angle: " + rotation_angle );
 		Vector3f translation = node.translation;
+		Vector3f previous_translation = new Vector3f( node.translation );
+		
 		translation.set( data.initial_translation );
 		tmp_rotation.rotY( rotation_angle - parent_rev );
 	    tmp_rotation.transform( translation );
+		
+	    if( name.equals("Moon"))
+	    {
+	    	// a bunch of debug calculations
+	    	Vector3f world_translation = new Vector3f( node.translation );
+	    	float cos_angle = world_translation.dot(previous_world_translation) / ( world_translation.length() * previous_world_translation.length() );
+	    	float angle = ( float )( Math.acos( cos_angle ) * 180.0 / Math.PI );
+	    	tmp_rotation.rotY( parent_rev );
+	    	tmp_rotation.transform( world_translation );
+	    	previous_world_translation.set( world_translation );
+	    	
+	    	System.out.printf( "Rotation: %f, Parent Revolution: %f, Net Rotation: %f\n", rotation_angle, 
+	    			parent_rev, rotation_angle - parent_rev );
+	    	System.out.printf( "Original translation: %s, New Translation: %s, Fully Rotated Translation: %s\n", 
+	    			previous_translation, node.translation, world_translation );
+	    	System.out.println( "World space update angle: " + angle );
+	    }
 	    
 	    time_prev = time;
 	}
