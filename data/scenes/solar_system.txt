@@ -1,0 +1,117 @@
+translation: [0.0, 0.0, 0.0]
+rotation: [0.0, 0.0, 0.0]
+name: Root
+children:
+- translation: [0.0, 0.0, 0.0]
+  rotation: [0.0, 0.0, 0.0]
+  name: Sun
+  children:
+  - translation: [6.8810267, 0.0, 0.0]
+    rotation: [0.0, 0.0, 0.0]
+    name: Mars
+    children:
+    - translation: [0.0, 0.65822625, 0.9213307]
+      rotation: [50.8, 0.0, 0.0]
+      name: Teapot
+      children: []
+      type: MeshNode
+      material:
+        specular: [1.0, 1.0, 1.0, 1.0]
+        diffuse: [0.9, 0.0, 0.0, 1.0]
+        shininess: 40.0
+        type: GLPhongMaterial
+        ambient: [0.05, 0.05, 0.05, 1.0]
+      mesh: {type: Teapot}
+      scaling: [0.2, 0.2, 0.2]
+    type: MeshNode
+    material:
+      specular: [1.0, 1.0, 1.0, 1.0]
+      diffuse: [0.9, 0.0, 0.0, 1.0]
+      shininess: 40.0
+      type: GLPhongMaterial
+      ambient: [0.05, 0.05, 0.05, 1.0]
+    mesh: {type: Sphere}
+    scaling: [0.5, 0.5, 0.5]
+  - translation: [3.491, 0.0, 0.0]
+    rotation: [0.0, 0.0, 0.0]
+    name: EarthGroup
+    children:
+    - translation: [0.0, 0.0, 0.0]
+      rotation: [0.0, 0.0, 0.0]
+      name: Earth
+      children: []
+      type: MeshNode
+      material:
+        specular: [1.0, 1.0, 1.0, 1.0]
+        diffuse: [0.0, 0.3, 0.9, 1.0]
+        shininess: 40.0
+        type: GLPhongMaterial
+        ambient: [0.05, 0.05, 0.05, 1.0]
+      mesh: {type: Sphere}
+      scaling: [1.0, 1.0, 1.0]
+    - translation: [0.0, 0.0, 2.2508204]
+      rotation: [0.0, 0.0, 0.0]
+      name: Moon
+      children:
+      - translation: [0.0, 1.7309947, 0.0]
+        rotation: [0.0, 0.0, 0.0]
+        name: Cylinder
+        children:
+        - translation: [0.0, 0.3897257, 5.21908]
+          rotation: [0.0, 0.0, 0.0]
+          name: Cube
+          children: []
+          type: MeshNode
+          material:
+            specular: [1.0, 1.0, 1.0, 1.0]
+            diffuse: [0.9, 0.0, 0.0, 1.0]
+            shininess: 40.0
+            type: GLPhongMaterial
+            ambient: [0.05, 0.05, 0.05, 1.0]
+          mesh: {type: Cube}
+          scaling: [0.88, 0.5325966, 5.8585396]
+        type: MeshNode
+        material:
+          specular: [1.0, 1.0, 1.0, 1.0]
+          diffuse: [0.9, 0.0, 0.0, 1.0]
+          shininess: 40.0
+          type: GLPhongMaterial
+          ambient: [0.05, 0.05, 0.05, 1.0]
+        mesh: {type: Cylinder}
+        scaling: [0.1, 0.8, 0.1]
+      type: MeshNode
+      material:
+        specular: [1.0, 1.0, 1.0, 1.0]
+        diffuse: [0.9, 0.9, 0.9, 1.0]
+        shininess: 40.0
+        type: GLPhongMaterial
+        ambient: [0.05, 0.05, 0.05, 1.0]
+      mesh: {type: Sphere}
+      scaling: [0.3, 0.3, 0.3]
+    type: TransformationNode
+    scaling: [0.5, 0.5, 0.5]
+  - position: [0.0, 0.0, 0.0, 1.0]
+    specular: [2.0, 2.0, 2.0, 1.0]
+    name: Light
+    diffuse: [0.4, 0.4, 0.4, 1.0]
+    children: []
+    type: LightNode
+    ambient: [0.05, 0.05, 0.05, 1.0]
+  type: MeshNode
+  material:
+    specular: [1.0, 1.0, 1.0, 1.0]
+    diffuse: [0.9, 0.9, 0.6, 1.0]
+    shininess: 40.0
+    type: GLPhongMaterial
+    ambient: [0.9, 0.9, 0.6, 1.0]
+  mesh: {type: Sphere}
+  scaling: [3.0, 3.0, 3.0]
+- position: [6.0, 8.0, 10.0, 1.0]
+  specular: [2.0, 2.0, 2.0, 1.0]
+  name: Light
+  diffuse: [0.4, 0.4, 0.4, 1.0]
+  children: []
+  type: LightNode
+  ambient: [0.05, 0.05, 0.05, 1.0]
+type: TransformationNode
+scaling: [1.0, 1.0, 1.0]
