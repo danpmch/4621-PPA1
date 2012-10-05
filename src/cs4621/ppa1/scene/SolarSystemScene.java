@@ -2,11 +2,8 @@ package cs4621.ppa1.scene;
 
 import java.io.IOException;
 
-import cs4621.ppa1.scene.*;
 import java.util.HashMap;
-
 import javax.vecmath.Matrix3f;
-import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
 public class SolarSystemScene extends Scene {

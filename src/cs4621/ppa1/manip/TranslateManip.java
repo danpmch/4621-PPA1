@@ -2,6 +2,7 @@ package cs4621.ppa1.manip;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
+import javax.vecmath.Matrix3f;
 import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3f;
 
@@ -50,12 +51,15 @@ public class TranslateManip extends Manip
 	{
 		Vector3f trans = get_translation_w( mousePosition, mousePosition_old );
 		
-		// convert to local space
+		// convert to object space
 		Vector3f trans_local = new Vector3f();
 		transformationNode.toLocal(trans, trans_local);
 		
-		System.out.println( "Trans local: " + trans_local );
-		return trans_local;
+		// convert to local space
+		Vector3f trans_t = new Vector3f();
+		transformationNode.transform(trans_local, trans_t);
+		
+		return trans_t;
 	}
 	
 	@Override
